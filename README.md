@@ -63,6 +63,34 @@ If the `suite-slug` attribute is not set, the plugin uses the pipeline slug as t
 
 ## Examples by runner
 
+### Bazel with a supplied client
+
+```yaml
+steps:
+  - label: "Bazel"
+    command:
+      - bazel build @com_github_buildkite_test_engine_client_v2//:v2
+      - ./bktec run
+    parallelism: 1
+    plugins:
+      - tests#v1.1.0:
+          suite-slug: my-bazel-suite
+          test-runner: bazel
+          result-path: results.pb
+          install-client: false
+          bazel-query: "tests(//...)"
+          bazel-flags: "--config=ci"
+```
+
+Use a client containing Bazel built-in uploads. In this example Bazel builds the
+client, and a repository-root `bktec` symlink points to the generated executable.
+With `install-client: false`, the plugin handles suite OIDC authentication and
+enables uploads without downloading or locating the client. The step's command
+can build the client before invoking it. No release or collector is needed.
+
+For Bazel, `result-path` is the binary BEP file. bktec reads its referenced JUnit
+reports and uploads the results itself after each attempt.
+
 ### Jest
 
 ```yaml
@@ -185,7 +213,7 @@ These options map directly to bktec flags or environment variables. For the full
 
 #### `test-runner` (required, string)
 
-Any runner supported by bktec, for example `rspec`, `jest`, `pytest`, or `gotest`.
+Any runner supported by bktec, for example `rspec`, `jest`, `pytest`, `gotest`, or `bazel`.
 
 #### `test-cmd` (required for `custom` and `pytest-pants` runners, string)
 

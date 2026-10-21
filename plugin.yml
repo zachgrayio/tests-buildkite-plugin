@@ -50,13 +50,19 @@ configuration:
     # Test runner
     test-runner:
       type: string
-      description: Test runner to use (e.g. "rspec", "jest", "pytest", "gotest").
+      description: Test runner to use (e.g. "rspec", "jest", "pytest", "gotest", "bazel").
     test-cmd:
       type: string
       description: Command to run the tests.
     result-path:
       type: string
-      description: Path to the output file produced by the test runner.
+      description: Path to the output file produced by the test runner, or the BEP file for Bazel.
+    bazel-query:
+      type: string
+      description: Query used to discover Bazel test targets. Defaults to "tests(//...)".
+    bazel-flags:
+      type: string
+      description: Extra flags passed to bazel test.
     split-by-example:
       type: boolean
       description: Enable split by example. Not supported by all test runners.

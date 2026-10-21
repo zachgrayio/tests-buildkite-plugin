@@ -23,6 +23,38 @@ setup() {
   assert_output "BUILDKITE_TEST_ENGINE_UPLOAD_RESULTS=true"
 }
 
+@test "exports Bazel runner options and enables uploads" {
+  export BUILDKITE_PLUGIN_TESTS_TEST_RUNNER="bazel"
+  export BUILDKITE_PLUGIN_TESTS_BAZEL_QUERY="tests(//tests/...)"
+  export BUILDKITE_PLUGIN_TESTS_BAZEL_FLAGS="--config=ci --nocache_test_results"
+  export BUILDKITE_PLUGIN_TESTS_RESULT_PATH="results/bep.pb"
+  export BUILDKITE_ENV_FILE=$(mktemp)
+
+  run "$PWD/hooks/environment"
+  assert_success
+
+  run cat "${BUILDKITE_ENV_FILE}"
+  assert_line "BUILDKITE_TEST_ENGINE_TEST_RUNNER=bazel"
+  assert_line "BUILDKITE_TEST_ENGINE_BAZEL_QUERY=tests(//tests/...)"
+  assert_line "BUILDKITE_TEST_ENGINE_BAZEL_FLAGS=--config=ci --nocache_test_results"
+  assert_line "BUILDKITE_TEST_ENGINE_RESULT_PATH=results/bep.pb"
+  assert_line "BUILDKITE_TEST_ENGINE_UPLOAD_RESULTS=true"
+}
+
+@test "keeps existing Bazel options when plugin options are unset" {
+  export BUILDKITE_TEST_ENGINE_BAZEL_QUERY="tests(//custom/...)"
+  export BUILDKITE_TEST_ENGINE_BAZEL_FLAGS="--config=custom"
+  export BUILDKITE_TEST_ENGINE_RESULT_PATH="custom.pb"
+  export BUILDKITE_ENV_FILE=$(mktemp)
+
+  run bash -c 'source "$PWD/hooks/environment"; printf "%s\n" "$BUILDKITE_TEST_ENGINE_BAZEL_QUERY" "$BUILDKITE_TEST_ENGINE_BAZEL_FLAGS" "$BUILDKITE_TEST_ENGINE_RESULT_PATH"'
+
+  assert_success
+  assert_line "tests(//custom/...)"
+  assert_line "--config=custom"
+  assert_line "custom.pb"
+}
+
 @test "respects upload-results when set to false" {
   export BUILDKITE_PLUGIN_TESTS_UPLOAD_RESULTS="false"
   export BUILDKITE_ENV_FILE=$(mktemp)
